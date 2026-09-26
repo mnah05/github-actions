@@ -27,6 +27,9 @@ go.work.sum
 # env file
 .env
 
+# server-side deploy state (last healthy image tag, written by `make deploy`)
+.last-working-tag
+
 # Editor/IDE
 # .idea/
 # .vscode/

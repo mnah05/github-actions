@@ -1,0 +1,13 @@
+services:
+  app:
+    image: "${DOCKERHUB_USERNAME:?DOCKERHUB_USERNAME is not set}/goapp:${TAG:-latest}"
+    container_name: goapp
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
