@@ -1,0 +1,55 @@
+name: GO CI with docker
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set Up GO
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Run tests
+        run: go test ./... -v
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t goapp:${{ github.sha }} .
+
+      - name: Run container
+        run: docker run -d --name goapp-test -p 8080:8080 goapp:${{ github.sha }}
+
+      - name: Wait for app to be ready
+        run: |
+          for i in {1..10}; do
+            if curl -sf http://localhost:8080/health; then
+              echo "App is up"
+              exit 0
+            fi
+            echo "Waiting for app..."
+            sleep 2
+          done
+          echo "App never became healthy"
+          exit 1
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker logs goapp-test
+
+      - name: Clean up
+        if: always()
+        run: docker rm -f goapp-test
